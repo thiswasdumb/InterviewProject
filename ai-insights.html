@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Insights</title>
+    <script src="https://cdn.plot.ly/plotly-2.24.2.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        section {
+            padding: 2rem;
+        }
+
+        h2 {
+            color: #007bff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ddd;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f9;
+        }
+
+        .chart-container {
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>AI Insights: Baseline Models and Stock Analysis</h1>
+    </header>
+
+    <section>
+        <h2>Model Predictions</h2>
+        <p>Below are the results of the three baseline models applied to the dataset.</p>
+        <div id="model-results"></div>
+
+        <h2>Overvalued and Undervalued Stocks</h2>
+        <div>
+            <h3>Top 5 Undervalued Stocks</h3>
+            <table id="undervalued-table">
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Intrinsic Value</th>
+                        <th>Market Price</th>
+                        <th>Method</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <h3>Top 5 Overvalued Stocks</h3>
+            <table id="overvalued-table">
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Intrinsic Value</th>
+                        <th>Market Price</th>
+                        <th>Method</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <h2>Visualization</h2>
+        <p>Explore the intrinsic value and market price distribution.</p>
+        <div id="chart" class="chart-container"></div>
+    </section>
+
+    <script src="ai_insights.js"></script>
+</body>
+
+</html>
