@@ -2,3 +2,4 @@ preprocessed_historical_data.csv
 feature_engineered_stock_data.csv
 sp500_historical_data.csv
 lstm_X.npy
+lstm_y.npy
