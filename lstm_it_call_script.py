@@ -1,3 +1,4 @@
+import joblib
 import pandas as pd
 import numpy as np
 import torch
@@ -91,6 +92,8 @@ for ticker in tickers_in_industry:
 # Convert results to DataFrame and display
 results_df = pd.DataFrame(results)
 print(results_df)
+
+joblib.dump(scaler, "scaler.pkl")
 
 # Save results to a CSV file
 results_df.to_csv("it_industry_predictions.csv", index=False)
