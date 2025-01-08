@@ -1,3 +1,4 @@
+import datetime
 import joblib
 import pandas as pd
 import numpy as np
@@ -87,7 +88,7 @@ for ticker in tickers_in_industry:
         actual_close = None
         print(f"Could not fetch actual close for {ticker}: {e}")
 
-    results.append({"Ticker": ticker, "Predicted Close": next_close, "Actual Close": actual_close})
+    results.append({"Ticker": ticker, "Predicted Close": next_close, "Actual Close": actual_close, "Date Updated": str(datetime.date.today())})
 
 # Convert results to DataFrame and display
 results_df = pd.DataFrame(results)
