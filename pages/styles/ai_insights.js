@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    Papa.parse('sp500_analysis.csv', {
+    Papa.parse('../sp500_analysis.csv', {
         download: true,
         header: true,
         dynamicTyping: true,
@@ -28,17 +28,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Load industry data and intrinsic values
     const industryFiles = [
-        { file: 'batch-computed-models/Consumer Discretionary_predictions.csv', name: 'Consumer Discretionary' },
-        { file: 'batch-computed-models/Consumer Staples_predictions.csv', name: 'Consumer Staples' },
-        { file: 'batch-computed-models/Energy_predictions.csv', name: 'Energy' },
-        { file: 'batch-computed-models/Financials_predictions.csv', name: 'Financials' },
-        { file: 'batch-computed-models/hc_predictions.csv', name: 'Healthcare' },
-        { file: 'batch-computed-models/Industrials_predictions.csv', name: 'Industrials' },
-        { file: 'batch-computed-models/it_industry_predictions.csv', name: 'Information Technology' },
-        { file: 'batch-computed-models/Materials_predictions.csv', name: 'Materials' },
-        { file: 'batch-computed-models/Real Estate_predictions.csv', name: 'Real Estate' },
-        { file: 'batch-computed-models/Telecommunication Services_predictions.csv', name: 'Telecommunication Services' },
-        { file: 'batch-computed-models/Utilities_predictions.csv', name: 'Utilities' }
+        { file: '../../batch-computed-models/Consumer Discretionary_predictions.csv', name: 'Consumer Discretionary' },
+        { file: '../../batch-computed-models/Consumer Staples_predictions.csv', name: 'Consumer Staples' },
+        { file: '../../batch-computed-models/Energy_predictions.csv', name: 'Energy' },
+        { file: '../../batch-computed-models/Financials_predictions.csv', name: 'Financials' },
+        { file: '../../batch-computed-models/hc_predictions.csv', name: 'Healthcare' },
+        { file: '../../batch-computed-models/Industrials_predictions.csv', name: 'Industrials' },
+        { file: '../../batch-computed-models/it_industry_predictions.csv', name: 'Information Technology' },
+        { file: '../../batch-computed-models/Materials_predictions.csv', name: 'Materials' },
+        { file: '../../batch-computed-models/Real Estate_predictions.csv', name: 'Real Estate' },
+        { file: '../../batch-computed-models/Telecommunication Services_predictions.csv', name: 'Telecommunication Services' },
+        { file: '../../batch-computed-models/Utilities_predictions.csv', name: 'Utilities' }
     ];
 
     // Function to compute Baseline Model effectiveness (MAE)
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
         insightsContainer.appendChild(section);
     }
 
-    Papa.parse('batch-computed-models/intrinsic_value_predictions.csv', {
+    Papa.parse('../../batch-computed-models/intrinsic_value_predictions.csv', {
         download: true,
         header: true,
         dynamicTyping: true,
@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let industryFilesProcessed = 0;
 
         // Parse intrinsic values once and store them in a map
-        Papa.parse('batch-computed-models/intrinsic_value_predictions.csv', {
+        Papa.parse('../../batch-computed-models/intrinsic_value_predictions.csv', {
             download: true,
             header: true,
             dynamicTyping: true,
@@ -426,7 +426,7 @@ function displayModelPredictions(data) {
 
 function displayOverUnderValuedStocks(data) {
     // Load the intrinsic values from the CSV
-    Papa.parse('batch-computed-models/intrinsic_value_predictions.csv', {
+    Papa.parse('../../batch-computed-models/intrinsic_value_predictions.csv', {
         download: true,
         header: true,
         complete: function (results) {
