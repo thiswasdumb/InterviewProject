@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Filter out entries with invalid or missing Symbol properties
             data = data.filter(row => row.Symbol && typeof row.Symbol === 'string');
 
-            // Sort data alphabetically by the 'Symbol' property
+            // Sort data alphabetically by the 'Symbol' property (this being the Ticker)
             data.sort((a, b) => {
                 if (a.Symbol < b.Symbol) return -1;
                 if (a.Symbol > b.Symbol) return 1;
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
         },
     });
 
-    // Load industry data and intrinsic values
+    // Load industry data and intrinsic values already precomputed in csv files
     const industryFiles = [
         { file: '../../batch-computed-models/Consumer Discretionary_predictions.csv', name: 'Consumer Discretionary' },
         { file: '../../batch-computed-models/Consumer Staples_predictions.csv', name: 'Consumer Staples' },
@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     title: {
                         display: true,
                         text: 'Average Overvaluation by Industry',
-                        color: 'white', // Set title color to white
+                        color: 'white',
                         font: {
                             size: 24
                         }
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            color: 'white', // Change Y-axis text to white
+                            color: 'white',
                             font: {
                                 size: 12
                             }
@@ -263,12 +263,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         title: {
                             display: true,
                             text: 'Overvaluation (%)',
-                            color: 'white' // Set Y-axis title color to white
+                            color: 'white'
                         }
                     },
                     x: {
                         ticks: {
-                            color: 'white', // Change X-axis text to white
+                            color: 'white',
                             font: {
                                 size: 12
                             }
@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         title: {
                             display: true,
                             text: 'Industry',
-                            color: 'white', // Set X-axis title color to white
+                            color: 'white',
                             font: {
                                 size: 18
                             }
@@ -287,8 +287,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-
-
+    // Loading neural network data
     function loadIndustryData(intrinsicValues) {
         const industrySection = document.getElementById('industry-predictions');
 
@@ -382,7 +381,6 @@ function displayModelPredictions(data) {
         { id: 'gradient-boosting-table', key: 'Gradient Boosting Machine_Prediction' },
     ];
 
-    const initialDisplayCount = 10;
     const displayIncrement = 10;
 
     models.forEach((model) => {
@@ -423,7 +421,7 @@ function displayModelPredictions(data) {
     });
 }
 
-
+// Function to display overvalued and undervalued stocks in table
 function displayOverUnderValuedStocks(data) {
     // Load the intrinsic values from the CSV
     Papa.parse('../../batch-computed-models/intrinsic_value_predictions.csv', {

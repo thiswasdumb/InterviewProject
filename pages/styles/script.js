@@ -1,38 +1,38 @@
-// Get the elements for the welcome message and options
+// Gets the title and links
 const welcomeContainer = document.getElementById("welcome-container");
 const screenerLink = document.querySelector(".screener-link");
 const intrinsicLink = document.querySelector(".intrinsic-link");
 const aiLink = document.querySelector(".ai-link");
 
 
-// The target texts to display
+// The text that will be displayed
 const targetText = "Welcome!";
 const screenerText = "Stock Screener";
 const intrinsicText = "Intrinsic Value Calculator";
 const aiText = "AI Profitability Insights";
 
-// Characters to cycle through
+// A nice long list of characters to randomly cycle through for that cool effect
 const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/";
 
-// Total duration for each effect (in milliseconds)
-const totalDuration = 3000; // Time for the "Welcome!" animation
-const optionDuration = 2500; // Time for the "Stock Visualizer" and "Market Insights" animations
+// Duration of the effects so they can be noticed (in ms)
+const totalDuration = 3000; // Time specifically for the Welcome title
+const optionDuration = 2500; // Time for the links to the other pages
 
-// Function to generate random characters
+// Function that randomly chooses a character
 function getRandomChar() {
     return characters[Math.floor(Math.random() * characters.length)];
 }
 
-// Function to animate rolling text for any target and element
+// Function that gives the effect of rolling through the test
 function animateText(target, element, duration, includeCursor = false) {
     const targetLength = target.length;
-    const intervalTime = 50; // Time between updates
-    const settleTimePerChar = duration / targetLength; // Gradual time per character to settle
-    const currentText = Array(targetLength).fill(""); // Current text state
+    const intervalTime = 50; // Time between changes of the characters
+    const settleTimePerChar = duration / targetLength; // Ensuring each subsequent character takes a tiny bit longer than its predecessor
+    const currentText = Array(targetLength).fill(""); // Current state of the text
 
-    let settledIndex = -1; // Tracks the current settled character index
+    let settledIndex = -1; // Current index which is settled into place (and all of its predecessors)
 
-    // Optionally add a blinking cursor
+    // Possibility to add blinking cursor so we can use same function on all pieces of text
     let cursor;
     if (includeCursor) {
         cursor = document.createElement("span");
@@ -40,29 +40,29 @@ function animateText(target, element, duration, includeCursor = false) {
         element.appendChild(cursor);
     }
 
-    // Rolling effect
+    // The actual rolling through random characters
     const interval = setInterval(() => {
         for (let i = 0; i < targetLength; i++) {
             if (i > settledIndex) {
-                // Keep rolling for characters beyond the settled ones
+                // Ensures characters after the settled index keep rolling
                 currentText[i] = getRandomChar();
             }
         }
         element.textContent = currentText.join(""); // Update the displayed text
-        if (includeCursor) element.appendChild(cursor); // Ensure the cursor stays after the text
+        if (includeCursor) element.appendChild(cursor); // Ensure the cursor stays blinking after text if set to true
     }, intervalTime);
 
-    // Gradually lock characters in place
+    // Gradually locks characters to correct position
     target.split("").forEach((char, index) => {
         setTimeout(() => {
             settledIndex = index; // Update the settled index
-            currentText[index] = char; // Lock the correct character
+            currentText[index] = char; // Put correct character to make word
 
-            // If it's the last character, stop the interval
+            // If last character, stop because we are done
             if (index === targetLength - 1) {
                 clearInterval(interval);
-                element.textContent = currentText.join(""); // Ensure final text is correct
-                if (includeCursor) element.appendChild(cursor); // Keep the cursor in place
+                element.textContent = currentText.join(""); // Join and ensures final text is what it is meant to be
+                if (includeCursor) element.appendChild(cursor); // Keep the cursor in place if true
             }
         }, index * settleTimePerChar);
     });
@@ -72,4 +72,4 @@ function animateText(target, element, duration, includeCursor = false) {
 animateText(targetText, welcomeContainer, totalDuration, true); // Welcome message with cursor
 animateText(screenerText, screenerLink, optionDuration, false); // Stock Visualizer without cursor
 animateText(intrinsicText, intrinsicLink, optionDuration, false); // Market Insights without cursor
-animateText(aiText, aiLink, optionDuration, false);
+animateText(aiText, aiLink, optionDuration, false); // AI Insights without cursor

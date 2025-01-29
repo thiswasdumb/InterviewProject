@@ -1,18 +1,13 @@
-
-
-//const API_KEY = "56RI009LMO7R6F91"; "JA2N4A0Z6CODVKUF"
-
-// Replace with your actual API keys
-
+// API Keys 
 const ALPHA_VANTAGE_API_KEY = "PVISE221PEPXLHYB";
 const FINNHUB_API_KEY = "cthpu71r01qm2t954n3gcthpu71r01qm2t954n40";
 
-// DOM Elements
+// DOM Elements in html
 const tickerInput = document.getElementById("stock-ticker");
 const fetchButton = document.getElementById("fetch-data");
 const suggestionsContainer = document.getElementById("suggestions");
 
-// Function: Fetch ticker suggestions from Finnhub
+// Function calls Finnhub API to find potential tickers that can complete input so far
 async function fetchSuggestions(query) {
     try {
         const response = await fetch(`https://finnhub.io/api/v1/search?q=${query}&token=${FINNHUB_API_KEY}`);
@@ -24,7 +19,7 @@ async function fetchSuggestions(query) {
     }
 }
 
-// Function: Display ticker suggestions
+// Function to display the suggestions found from the API
 function showSuggestions(suggestions) {
     suggestionsContainer.innerHTML = ""; // Clear previous suggestions
     if (suggestions.length === 0) {
@@ -32,7 +27,7 @@ function showSuggestions(suggestions) {
         return;
     }
 
-    suggestionsContainer.style.display = "block"; // Ensure container is visible
+    suggestionsContainer.style.display = "block"; // Makes sure suggestions show properly
     suggestions.forEach(suggestion => {
         const li = document.createElement("li");
         li.textContent = `${suggestion.symbol} - ${suggestion.description}`;
@@ -40,7 +35,7 @@ function showSuggestions(suggestions) {
         li.style.padding = "0.5rem";
         li.style.borderBottom = "1px solid #ddd";
 
-        // On click, populate input and clear suggestions
+        // If one of the suggestions is clicked then it fills the search (but i do not let it go through incase an incorrect one was clicked!)
         li.addEventListener("click", () => {
             tickerInput.value = suggestion.symbol;
             suggestionsContainer.innerHTML = "";
@@ -51,7 +46,7 @@ function showSuggestions(suggestions) {
     });
 }
 
-// Event Listener: Fetch autocomplete suggestions
+// An event listener which see if there is an input so it then can call suggestions
 tickerInput.addEventListener("input", async () => {
     const query = tickerInput.value.trim();
     if (query.length < 1) {
@@ -64,7 +59,7 @@ tickerInput.addEventListener("input", async () => {
     showSuggestions(suggestions);
 });
 
-// Clear suggestions when clicking outside the input
+// If the user clicks somewhere else, the suggestions go away (so they dont just stay on the screen forever that would be annoying)
 document.addEventListener("click", (e) => {
     if (!e.target.closest("#stock-input")) {
         suggestionsContainer.innerHTML = "";
@@ -72,31 +67,40 @@ document.addEventListener("click", (e) => {
     }
 });
 
-
-// Event Listener: Fetch stock data on button click
-fetchButton.addEventListener("click", () => {
+// Event listener which checks input when stock is added and provides the data
+fetchButton.addEventListener("click", async () => {
     const ticker = tickerInput.value.toUpperCase();
     if (!ticker) {
         alert("Please enter a stock ticker!");
         return;
     }
-    fetchStockData(ticker);
+
+    await fetchStockData(ticker);
+
+    // Clear the input field after fetching stock data
+    tickerInput.value = "";
+
+    // Also hide suggestions
+    suggestionsContainer.innerHTML = "";
+    suggestionsContainer.style.display = "none";
 });
 
-// Mock data for multiple stocks (Replace with real data)
+
+// Array for stock data potentially
 let stockData = [];
 
-// Function: Check if the stock already exists in the table
+// Function which checks if stock already exists in the table
 function isStockInTable(ticker) {
     const rows = document.querySelectorAll("#results-table tbody tr");
     for (const row of rows) {
-        const cell = row.querySelector("td"); // First cell in the row
+        const cell = row.querySelector("td");
         if (cell && cell.textContent === ticker) {
             return true;
         }
     }
     return false;
 }
+
 
 function formatValue(value, decimalPlaces = 2) {
     if (value === null || value === undefined || isNaN(value)) {
@@ -109,39 +113,48 @@ function formatValue(value, decimalPlaces = 2) {
 function addStockToTable(stock) {
     const tableBody = document.querySelector("#results-table tbody");
 
+    // Avoid duplicates if inputted
+    if (isStockInTable(stock.ticker)) {
+        console.warn(`Ticker ${stock.ticker} is already in the table. Skipping duplicate.`);
+        return; // Exit function if stock is already present
+    }
+
     // Main row for the stock
     const row = document.createElement("tr");
+    row.classList.add("stock-row");
     row.innerHTML = `
-        <td>${stock.ticker}</td>
-        <td>${stock.companyName}</td>
-        <td>${formatValue(stock.peRatio)}</td>
-        <td>${formatValue(stock.pbRatio)}</td>
-        <td>${formatValue(stock.roe)}</td>
-        <td>${formatValue(stock.dividendYield)}</td>
-    `;
+    <td>${stock.ticker}</td>
+    <td>${stock.companyName}</td>
+    <td>${formatValue(stock.peRatio)}</td>
+    <td>${formatValue(stock.pbRatio)}</td>
+    <td>${formatValue(stock.roe)}</td>
+    <td>${formatValue(stock.dividendYield)}</td>
+`;
 
-    // Hidden expandable row for additional details
+    // Add a hidden expandable row that provides more details for each stock
     const detailRow = document.createElement("tr");
+    detailRow.classList.add("details-row");
     detailRow.style.display = "none";
     detailRow.innerHTML = `
-        <td colspan="6" class="details-cell" style="padding: 10px; background-color: #333;">
-            <div class="details-content" style="color: #d1e8e2; font-size: 0.9rem;">
-                Loading details...
-            </div>
-        </td>
-    `;
+    <td colspan="6" class="details-cell" style="padding: 10px; background-color: #333;">
+        <div class="details-content" style="color: #d1e8e2; font-size: 0.9rem;">
+            Loading details...
+        </div>
+    </td>
+`;
 
-    // Add the main row and the detail row to the table
+    // Add the main row and the detail row to the table (this is so when sorting occurs, they dont separate)
     tableBody.appendChild(row);
     tableBody.appendChild(detailRow);
 
-    // Event listener for toggling the detail row
+
+    // Event listener for opening the expandable row
     row.addEventListener("click", async () => {
         if (detailRow.style.display === "none") {
-            // Fetch and display details if the row is expanded
+            // Fetches and displays details if the row is expanded
             const detailsContent = detailRow.querySelector(".details-content");
-            detailsContent.textContent = "Loading details..."; // Reset loading state
-            detailRow.style.display = ""; // Show the detail row
+            detailsContent.textContent = "Loading details..."; // Loading state if it is taking time
+            detailRow.style.display = ""; // Display for the row
 
             const details = await fetchDetailedInfo(stock.ticker);
             if (details) {
@@ -166,12 +179,12 @@ function addStockToTable(stock) {
                 detailsContent.textContent = "Failed to load details.";
             }
         } else {
-            detailRow.style.display = "none"; // Hide the detail row
+            detailRow.style.display = "none";
         }
     });
 }
 
-// Function: Fetch detailed info
+// Function which basically calls APIs to get the detailed info
 async function fetchDetailedInfo(ticker) {
     try {
         const profileResponse = await fetch(
@@ -200,48 +213,14 @@ async function fetchDetailedInfo(ticker) {
     }
 }
 
-// Helper Function: Format date for news API
+// Helper function for API calls
 function getFormattedDate(daysAgo) {
     const date = new Date();
     date.setDate(date.getDate() - daysAgo);
     return date.toISOString().split("T")[0];
 }
 
-
-// Function to show modal
-function showModal(ticker, details) {
-    const modal = document.createElement("div");
-    modal.style.position = "fixed";
-    modal.style.top = "50%";
-    modal.style.left = "50%";
-    modal.style.transform = "translate(-50%, -50%)";
-    modal.style.backgroundColor = "#444";
-    modal.style.color = "white";
-    modal.style.padding = "20px";
-    modal.style.borderRadius = "8px";
-    modal.style.zIndex = 1000;
-
-    const modalContent = `
-        <h2>${ticker} - ${details.profile.name || "N/A"}</h2>
-        <p><strong>Industry:</strong> ${details.profile.finnhubIndustry || "N/A"}</p>
-        <p><strong>Market Cap:</strong> ${details.profile.marketCapitalization || "N/A"}</p>
-        <h3>Recent News</h3>
-        <ul>
-            ${details.news.slice(0, 3).map(news => `<li>${news.headline} - <a href="${news.url}" target="_blank">Read more</a></li>`).join("")}
-        </ul>
-        <button id="close-modal">Close</button>
-    `;
-
-    modal.innerHTML = modalContent;
-    document.body.appendChild(modal);
-
-    // Close modal event
-    document.getElementById("close-modal").addEventListener("click", () => {
-        modal.remove();
-    });
-}
-
-
+// Function to actually call API and get the data requested
 async function fetchStockData(ticker) {
     try {
         // Fetch company info and metrics from Finnhub
@@ -255,7 +234,6 @@ async function fetchStockData(ticker) {
         const metricsResponse = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${FINNHUB_API_KEY}`);
         const metricsData = await metricsResponse.json();
 
-        // Validate and update metrics
         if (metricsData && metricsData.metric) {
             const stock = {
                 ticker: ticker,
@@ -277,7 +255,7 @@ async function fetchStockData(ticker) {
 }
 
 
-// Apply filters
+// Apply filters to make sure outputs make sense
 document.getElementById("apply-filters").addEventListener("click", () => {
     const minPE = parseFloat(document.getElementById("min-pe").value) || -Infinity;
     const maxPE = parseFloat(document.getElementById("max-pe").value) || Infinity;
@@ -302,17 +280,27 @@ document.getElementById("fetch-data").addEventListener("click", () => {
     fetchStockData(ticker);
 });
 
-// Function: Sort table by column
+// Function that allows sorting based on column clicked
 function sortTable(column, isNumeric = false) {
     const tableBody = document.querySelector("#results-table tbody");
-    const rows = Array.from(tableBody.rows);
+    const rows = Array.from(tableBody.querySelectorAll("tr"));
 
-    // Clear existing sort indicators
+    // Create an array of row pairs so that the expandable ro is basically a pair that wont leave its ticker
+    let rowPairs = [];
+    for (let i = 0; i < rows.length; i++) {
+        if (rows[i].classList.contains("stock-row")) {
+            let mainRow = rows[i];
+            let detailRow = (i + 1 < rows.length && rows[i + 1].classList.contains("details-row")) ? rows[i + 1] : null;
+            rowPairs.push([mainRow, detailRow]);
+        }
+    }
+
+    // Clear existing sort indicators when column is clicked and replace
     document.querySelectorAll("#results-table th").forEach(th => {
         th.textContent = th.textContent.replace(" ▲", "").replace(" ▼", "");
     });
 
-    // Toggle sort direction
+    // Toggle sort direction based on previous direction if one existed
     const currentSortDirection = tableBody.getAttribute("data-sort-direction") || "asc";
     const newSortDirection = currentSortDirection === "asc" ? "desc" : "asc";
     tableBody.setAttribute("data-sort-direction", newSortDirection);
@@ -321,23 +309,33 @@ function sortTable(column, isNumeric = false) {
     const header = document.querySelector(`#results-table th:nth-child(${column + 1})`);
     header.textContent += newSortDirection === "asc" ? " ▲" : " ▼";
 
-    rows.sort((a, b) => {
-        const cellA = a.cells[column].textContent.trim();
-        const cellB = b.cells[column].textContent.trim();
+    // Sort the row pairs while keeping details rows attached
+    rowPairs.sort((a, b) => {
+        let cellA = a[0].cells[column] ? a[0].cells[column].textContent.trim() : "";
+        let cellB = b[0].cells[column] ? b[0].cells[column].textContent.trim() : "";
 
         if (isNumeric) {
-            const numA = parseFloat(cellA) || 0;
-            const numB = parseFloat(cellB) || 0;
+            let numA = parseFloat(cellA);
+            let numB = parseFloat(cellB);
+
+            if (isNaN(numA)) return newSortDirection === "asc" ? 1 : -1;
+            if (isNaN(numB)) return newSortDirection === "asc" ? -1 : 1;
+
             return newSortDirection === "asc" ? numA - numB : numB - numA;
         } else {
             return newSortDirection === "asc" ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
         }
     });
 
-    rows.forEach(row => tableBody.appendChild(row));
+    // Clear the table and append sorted rows back in order
+    tableBody.innerHTML = "";
+    rowPairs.forEach(pair => {
+        tableBody.appendChild(pair[0]); // Append main stock row
+        if (pair[1]) tableBody.appendChild(pair[1]); // Append detailed row if it is expanded
+    });
 }
 
-
+// Styling rows so it is easy to put align numbers in table when hovering
 document.querySelectorAll("#results-table tbody tr").forEach(row => {
     row.addEventListener("mouseover", () => {
         row.style.backgroundColor = "#333";
@@ -346,3 +344,5 @@ document.querySelectorAll("#results-table tbody tr").forEach(row => {
         row.style.backgroundColor = "";
     });
 });
+
+

@@ -4,9 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome</title>
+    <title>Homepage</title>
     <style>
-        /* General Styles */
         body {
             margin: 0;
             padding: 0;
@@ -18,14 +17,13 @@
             background-color: black;
             color: white;
             font-family: 'Courier New', Courier, monospace;
-            /* Code-like font */
+            /* Trying to get a code-like font */
         }
 
         #welcome-container {
             font-size: 3rem;
             letter-spacing: 0.1rem;
             white-space: nowrap;
-            /* Ensures no wrapping occurs */
         }
 
         .cursor {
@@ -34,7 +32,6 @@
             width: 0.2rem;
             height: 2rem;
             margin-left: 0.2rem;
-            /* Slight spacing between text and cursor */
             animation: blink 1s infinite;
         }
 
@@ -55,27 +52,21 @@
             text-align: center;
         }
 
-        /* Base styles for links */
-        /* Base styles for links */
         .link {
             display: inline-block;
             font-size: 1.5rem;
             text-decoration: none;
             padding: 0.5rem 1rem;
             color: white;
-            /* Code-like syntax colors for links */
             border: 1px solid transparent;
             margin: 0.5rem;
             position: relative;
             overflow: hidden;
-            /* Ensures animations stay within the element */
             transition: color 0.3s ease;
         }
 
-        /* Syntax Highlighting Colors */
         .screener-link {
             color: #66d9ef;
-            /* Light blue (Strings in code editors) */
         }
 
         .intrinsic-link {
@@ -87,13 +78,10 @@
             color: #e2702e;
         }
 
-        /* Cool hover effect for links */
         .link:hover {
-            /* Text turns black on hover */
             cursor: pointer;
         }
 
-        /* Animated fading glow effect */
         .link:hover::before {
             content: "";
             position: absolute;
@@ -103,23 +91,18 @@
             height: 170%;
             background: radial-gradient(circle, rgba(206, 219, 222, 0.5), rgba(74, 77, 78, 0) 70%);
             filter: blur(20px);
-            /* Softens the edges further */
             z-index: -1;
-            /* Keeps the glow behind the text */
             animation: fade-glow 2s infinite;
         }
 
-        /* Box highlight animation */
         .link:hover::after {
             content: "";
             position: absolute;
             inset: 0;
             border: 1px dashed #ffffff;
-            /* Dashed box outline effect */
             animation: dash 1s linear infinite;
         }
 
-        /* Glow pulse animation */
         @keyframes fade-glow {
             0% {
                 transform: scale(1);
@@ -137,7 +120,6 @@
             }
         }
 
-        /* Dash animation */
         @keyframes dash {
             0% {
                 stroke-dasharray: 0, 200;
@@ -154,7 +136,6 @@
 
 <body>
     <div id="welcome-container">
-
     </div>
 
     <div id="options">

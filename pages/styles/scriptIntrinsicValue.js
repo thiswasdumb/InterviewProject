@@ -1,8 +1,8 @@
-// Replace with your actual Finnhub API key
+// API  Keys
 const FINNHUB_API_KEY = "cthpu71r01qm2t954n3gcthpu71r01qm2t954n40";
 const ALPHA_VANTAGE_API_KEY = "PVISE221PEPXLHYB";
 
-// DOM Elements
+// DOM Elements from html
 const intrinsicValueDisplay = document.getElementById("intrinsic-value");
 const marketValueDisplay = document.getElementById("market-value");
 const chartContainer = document.getElementById("chart-container");
@@ -13,6 +13,7 @@ const calculationDetails = {
     discountRateValue: document.getElementById("discount-rate-value"),
 };
 
+// If user inputted values for intrinsic growth calculation
 const userInputs = {
     eps: document.getElementById("user-eps"),
     growthRate: document.getElementById("user-growth-rate"),
@@ -21,6 +22,7 @@ const userInputs = {
 
 const calculateUserBtn = document.getElementById("calculate-user-btn");
 
+// Originally set the values to null
 let originalValues = {
     intrinsicValue: null,
     marketValue: null,
@@ -29,6 +31,7 @@ let originalValues = {
 const fetchTickerBtn = document.getElementById("fetch-ticker-btn");
 const tickerInput = document.getElementById("ticker-input");
 
+// If ticker is inputted, calculate and display intrinsic value
 fetchTickerBtn.addEventListener("click", () => {
     const ticker = tickerInput.value.trim().toUpperCase();
     if (!ticker) {
@@ -39,7 +42,7 @@ fetchTickerBtn.addEventListener("click", () => {
 });
 
 
-// Function: Fetch market value using Finnhub
+// Function which fetches the market value of a stock
 async function fetchMarketValue(ticker) {
     try {
         const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FINNHUB_API_KEY}`);
@@ -51,7 +54,7 @@ async function fetchMarketValue(ticker) {
     }
 }
 
-// Function: Fetch EPS for intrinsic value calculation
+// Function for fetching Earnings per Share (EPS) for an inputted stick
 async function fetchEPS(ticker) {
     try {
         const response = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${FINNHUB_API_KEY}`);
@@ -63,7 +66,7 @@ async function fetchEPS(ticker) {
     }
 }
 
-// Function: Calculate intrinsic value
+// Function to perform intrinsic value calculation with standard growth rate and discount rate and long-term anticipation of intrinsic value for stock
 function calculateIntrinsicValue(eps, growthRate = 10, discountRate = 8, years = 10) {
     let intrinsicValue = 0;
     for (let year = 1; year <= years; year++) {
@@ -74,6 +77,7 @@ function calculateIntrinsicValue(eps, growthRate = 10, discountRate = 8, years =
     return intrinsicValue.toFixed(2);
 }
 
+// Plot data for intrinsic value, along with calculation with standrd, underoptimistic, overoptimistic, and industry standard bars
 function plotIntrinsicValueComparison(intrinsicValue, marketValue, scenarios, userIntrinsicValue = null) {
     const data = [
         {
@@ -98,7 +102,7 @@ function plotIntrinsicValueComparison(intrinsicValue, marketValue, scenarios, us
         },
     ];
 
-    // Add scenario bars with hover text
+    // Add scenario bars with hover text which provides further data
     Object.keys(scenarios).forEach((scenario) => {
         const { value, growthRate, discountRate } = scenarios[scenario];
         data.push({
@@ -149,7 +153,7 @@ function plotIntrinsicValueComparison(intrinsicValue, marketValue, scenarios, us
 }
 
 
-// Define industry-specific growth and discount rates
+// Define industry-specific growth and discount rates based on idea of typical values base don industry
 const industryRates = {
     Technology: { growthRate: 12, discountRate: 9 },
     Healthcare: { growthRate: 10, discountRate: 8 },
@@ -162,7 +166,7 @@ const industryRates = {
     Industrials: { growthRate: 7, discountRate: 10 },
 };
 
-// Function: Fetch company profile to determine industry
+// Function which finds the company profile to determine industry for industry rates
 async function fetchCompanyProfile(ticker) {
     try {
         const response = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${FINNHUB_API_KEY}`);
@@ -174,7 +178,7 @@ async function fetchCompanyProfile(ticker) {
     }
 }
 
-// User-defined calculation
+// Event listener for user inputted which allows for specific intrinsic value calculation and bar added to the plot
 calculateUserBtn.addEventListener("click", () => {
     const eps = parseFloat(userInputs.eps.value);
     const growthRate = parseFloat(userInputs.growthRate.value) || 10;
@@ -187,7 +191,6 @@ calculateUserBtn.addEventListener("click", () => {
 
     const userIntrinsicValue = calculateIntrinsicValue(eps, growthRate, discountRate);
 
-    // Ensure original values remain in the chart along with scenarios
     plotIntrinsicValueComparison(
         originalValues.intrinsicValue,
         originalValues.marketValue,
@@ -196,7 +199,7 @@ calculateUserBtn.addEventListener("click", () => {
     );
 });
 
-// Main function: Fetch and display values
+// Main function to display values
 async function calculateAndDisplayIntrinsicValue(ticker) {
     try {
         const [eps, marketValue, industry] = await Promise.all([
@@ -216,7 +219,7 @@ async function calculateAndDisplayIntrinsicValue(ticker) {
 
         const intrinsicValue = calculateIntrinsicValue(eps);
 
-        // Scenarios with additional details
+        // Scenarios with additional details for comparison in the plot
         const scenarios = {
             Underoptimistic: {
                 value: calculateIntrinsicValue(eps, 5, 12), // Conservative assumptions
