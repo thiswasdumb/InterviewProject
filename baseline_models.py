@@ -10,14 +10,10 @@ from concurrent.futures import ThreadPoolExecutor
 import os
 import pickle
 
-# API Keys
-# Finnhub API Key
-FINNHUB_API_KEY = "cthpu71r01qm2t954n3gcthpu71r01qm2t954n40"
-
 # Database setup
 DB_FILE = "sp500_analysis.db"
 MODEL_FILE = "baseline_models.pkl"
-engine = create_engine(f"sqlite:///{DB_FILE}")
+
 
 # Industry-specific growth and discount rates
 industry_rates = {
@@ -50,72 +46,67 @@ def fetch_data_from_yahoo(symbol):
         print(f"Yahoo Finance error for {symbol}: {e}")
         return None, None, None, None
 
-# Function to fetch data from Finnhub API
-def fetch_data_from_finnhub(symbol):
-    try:
-        metric_response = requests.get(
-            f"https://finnhub.io/api/v1/stock/metric?symbol={symbol}&metric=all&token={FINNHUB_API_KEY}"
-        )
-        metric_data = metric_response.json()
-        eps = metric_data.get("metric", {}).get("epsTTM", None)
-        revenue_per_share = metric_data.get("metric", {}).get("revenuePerShareTTM", None)
-        ps_ratio = metric_data.get("metric", {}).get("psTTM", None)
+# Function to calculate intrinsic value (using corrected approach)
+def calculate_intrinsic_value(row):
+    sector = row["Sector"]
+    rates = industry_rates.get(sector, None)
 
-        quote_response = requests.get(
-            f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={FINNHUB_API_KEY}"
-        )
-        quote_data = quote_response.json()
-        market_price = quote_data.get("c", None)
+    if rates is None:
+        return None  # Skip calculation if sector is unknown
 
-        return eps, market_price, revenue_per_share, ps_ratio
-    except Exception as e:
-        print(f"Finnhub error for {symbol}: {e}")
-        return None, None, None, None
+    growth_rate = rates["growth_rate"] / 100  # Convert to decimal
+    discount_rate = rates["discount_rate"] / 100  # Convert to decimal
 
-# Function to calculate DCF-based intrinsic value
-def calculate_dcf(eps, growth_rate, discount_rate, years=10):
-    intrinsic_value = 0
-    for year in range(1, years + 1):
-        projected_eps = eps * (1 + growth_rate / 100) ** year
-        discounted_value = projected_eps / (1 + discount_rate / 100) ** year
-        intrinsic_value += discounted_value
-    return intrinsic_value
+    # Calculate next year's EPS
+    if row["EPS"] and row["EPS"] > 0:
+        next_year_eps = row["EPS"] * (1 + growth_rate)
 
-# Function to calculate P/S-based intrinsic value
-def calculate_ps_valuation(revenue_per_share, ps_ratio):
-    return revenue_per_share * ps_ratio
+        # Safeguard for small denominator
+        denominator = discount_rate - growth_rate
+        if denominator > 0.01:  # Ensure denominator is not too small
+            intrinsic_value = next_year_eps / denominator
+        else:
+            # Use alternative one-year forward DCF approach
+            intrinsic_value = next_year_eps / (1 + discount_rate)
+    else:
+        intrinsic_value = None  # EPS is invalid
 
-# Function to fetch and process data
+    # If intrinsic value is invalid, use P/S ratio approach
+    if intrinsic_value is None or intrinsic_value <= 0 or pd.isna(intrinsic_value):
+        if row["P/S_Ratio"] and row["P/S_Ratio"] > 0 and row["Revenue_Per_Share"] and row["Revenue_Per_Share"] > 0:
+            intrinsic_value = row["P/S_Ratio"] * row["Revenue_Per_Share"]
+        else:
+            intrinsic_value = row["Market_Price"]  # Fallback to market price
+
+    return max(intrinsic_value, 0)  # Ensure positive intrinsic value
+
+# Function to fetch and process data for each stock
 def fetch_and_process(row):
     symbol = row["Symbol"]
     industry = row["Sector"]
 
-    if symbol in ["CHK", "GPS"]:  # Use Finnhub for specific tickers
-        eps, market_price, revenue_per_share, ps_ratio = fetch_data_from_finnhub(symbol)
-    else:  # Use Yahoo Finance for others
-        eps, market_price, revenue_per_share, ps_ratio = fetch_data_from_yahoo(symbol)
+    eps, market_price, revenue_per_share, ps_ratio = fetch_data_from_yahoo(symbol)
 
     if market_price and market_price > 0:
-        if eps and eps > 0.01:  # Use DCF for positive EPS
-            rates = industry_rates.get(industry, {"growth_rate": 8, "discount_rate": 10})
-            intrinsic_value = calculate_dcf(eps, rates["growth_rate"], rates["discount_rate"])
-            method = "DCF"
-        elif revenue_per_share and revenue_per_share > 0 and ps_ratio and ps_ratio > 0:  # Use P/S ratio
-            intrinsic_value = calculate_ps_valuation(revenue_per_share, ps_ratio)
-            method = "P/S"
-        else:
-            intrinsic_value, method = None, "None"
+        # Store retrieved data in row for intrinsic value calculation
+        row["EPS"] = eps
+        row["Market_Price"] = market_price
+        row["Revenue_Per_Share"] = revenue_per_share
+        row["P/S_Ratio"] = ps_ratio
+
+        intrinsic_value = calculate_intrinsic_value(row)
 
         return {
             "Symbol": symbol,
-            "Intrinsic_Value": intrinsic_value,
+            "Intrinsic_Value": intrinsic_value if intrinsic_value else None,
             "Market_Price": market_price,
-            "Method": method,
+            "Method": "DCF" if intrinsic_value and intrinsic_value != market_price else "P/S",
             "Last_Updated": datetime.now(),
         }
 
     print(f"Skipping {symbol}: No valid data available.")
     return None
+
 
 # Function to fetch all data in parallel
 def fetch_all_data_in_parallel(df):
@@ -148,7 +139,6 @@ def apply_baseline_models(df):
 
     return df
 
-# Main execution
 def main():
     print("Fetching and updating data...")
     sp500_data = pd.read_csv("sp500_tickers.csv")
@@ -160,10 +150,10 @@ def main():
     updated_data = apply_baseline_models(updated_data)
 
     # Identify top undervalued and overvalued stocks
-    updated_data.loc[:, "Undervalued"] = updated_data["Intrinsic_Value"] > updated_data["Market_Price"]
-    updated_data.loc[:, "Overvalued"] = updated_data["Intrinsic_Value"] < updated_data["Market_Price"]
+    updated_data["Undervalued"] = updated_data["Intrinsic_Value"] > updated_data["Market_Price"]
+    updated_data["Overvalued"] = updated_data["Intrinsic_Value"] < updated_data["Market_Price"]
 
-     # Display tickers using DCF and P/S methods
+    # Display tickers using DCF and P/S methods
     dcf_tickers = updated_data[updated_data["Method"] == "DCF"]
     ps_tickers = updated_data[updated_data["Method"] == "P/S"]
 
@@ -174,18 +164,15 @@ def main():
     print(ps_tickers[["Symbol", "Intrinsic_Value", "Market_Price", "Undervalued", "Overvalued"]].head(10))
 
     print("\nTop 5 Undervalued Stocks:")
-    print(updated_data.loc[updated_data["Undervalued"]].sort_values("Intrinsic_Value", ascending=False).head(5))
+    print(updated_data[updated_data["Undervalued"]].sort_values("Intrinsic_Value", ascending=False).head(5))
 
     print("\nTop 5 Overvalued Stocks:")
-    print(updated_data.loc[updated_data["Overvalued"]].sort_values("Intrinsic_Value", ascending=True).head(5))
+    print(updated_data[updated_data["Overvalued"]].sort_values("Intrinsic_Value", ascending=True).head(5))
 
-    # Save results to database
-    updated_data.to_sql("sp500_analysis", engine, if_exists="replace", index=False)
-    print("Results saved to database.")
-
-    with open("cron_log.txt", "a") as log_file:
-        log_file.write(f"Script executed at {datetime.now()}\n")
-
+    # Save results to a CSV file
+    csv_file = "sp500_analysis.csv"
+    updated_data.to_csv(csv_file, index=False, encoding='utf-8')
+    print(f"Results saved to {csv_file}.")
 
 if __name__ == "__main__":
     main()
